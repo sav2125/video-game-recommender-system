@@ -1,0 +1,198 @@
+doctype html
+html(lang='en')
+  head
+    style.
+      div.scrolly {
+      height: 400px;
+      overflow-y: auto;
+      }
+      div.scrollx {
+      height: 300px;
+      width: 1200px;
+      overflow-x: auto;
+      }
+    title Recommendation Engine
+    meta(charset='utf-8')
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    link(rel='stylesheet', href='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css')
+    link(rel='stylesheet', href='awesomplete.css')
+    script(src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js')
+    script(src='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js')
+    script(src='/try2.js')
+    script(src='awesomplete.js', async='')
+    script.
+      function priceValCheck(){
+      a=document.getElementById("price").value;
+      document.getElementById("errfn").innerHTML=null;
+      if(!(a >>> 0 )){
+      document.getElementById("errfn").innerHTML="Please enter a valid price";
+      return false;
+      }
+      else{
+      return true;
+      }
+      }
+    
+  body
+    .container
+
+      .modal.bs-example-modal-lg(tabindex='-1', role='dialog', aria-labelledby='mySmallModalLabel')
+        .modal-dialog.modal-lg
+            .modal-content
+                .modal-header
+                    button.close(type='button', data-dismiss='modal', aria-label='Close')
+                        span(aria-hidden='true') ×
+                    h4#gridSystemModalLabel.modal-title Contact Seller
+                .modal-body
+                    | An email has been sent to the owner to get in touch with you regarding the product.
+      .modal#mymodal.bs-example-modal-md(tabindex='-1', role='dialog', aria-labelledby='mySmallModalLabel')
+        .modal-dialog.modal-md
+            .modal-content
+                .modal-header
+                    button.close(type='button', data-dismiss='modal', aria-label='Close')
+                        span(aria-hidden='true') ×
+                    h4#gridSystemModalLabel.modal-title Delete my Ad
+                .modal-body
+                    | Ad deleted!
+      .modal#mymodal1.bs-example-modal-md(tabindex='-1', role='dialog', aria-labelledby='mySmallModalLabel')
+        .modal-dialog.modal-md
+            .modal-content
+                .modal-header
+                    button.close(type='button', data-dismiss='modal', aria-label='Close')
+                        span(aria-hidden='true') ×
+                    h4#gridSystemModalLabel.modal-title Delete my Ad
+                .modal-body
+                    | Ad deleted!
+                    
+      #myModal1.modal.fade(role='dialog')
+        .modal-dialog
+            // Modal content
+            .modal-content
+                .modal-header(style='padding:35px 50px;')
+                    button.close(type='button', data-dismiss='modal', onclick="reset()") ×
+                    h4  Post Ad
+                form(action='/api/insertAds', method='post', onsubmit='return priceValCheck()' )
+                    .modal-body(style='padding:40px 50px;')
+                      .form-group
+                        .col-sm-6
+                          label(for='Name') Name
+                          br
+                          input#name.form-control.col-sm-12.awesomplete(type='text', name='name', onkeyup='getSimilarGamesList()', required='', placeholder='Enter the game name', style='width:100%')
+                        .col-sm-6
+                          label(for='Name') Platform
+                          select#platform.form-control.input(name='platform', required='', style='position:relative')
+                            option(value='Xbox') Xbox
+                            option(value='PS3') PS3
+                            option(value='PS4') PS4
+                            option(value='PC') PC
+                          br
+                      .form-group.col-sm-12 
+                        label(for='Price') Price
+                        input#price.form-control(type='text', name='price', required='', placeholder='Enter the price for the game')
+                        #errfn 
+                      .form-group.col-sm-12
+                        label(for='Location') Location
+                        input#location.form-control(type='text', name='location', required='')
+                      input.btn.btn-success.btn-block(type='submit')
+                      
+
+      br
+      .row
+          .col-xs-9
+              ul.nav.nav-tabs
+                li.active
+                  a(data-toggle='tab', href='#home') Home
+                li
+                  a(data-toggle='tab', href='#myads') My Ads
+
+          .col-md-1
+
+                      button.btn.btn-primary(type='button', data-toggle='modal', data-target='#myModal1') Post Ad
+          .col-md-1
+                  form(action='/logout' method='get')
+                      button.btn.btn-primary Logout
+      .tab-content
+        #home.tab-pane.fade.in.active
+            .row
+                .col-xs-12
+                    .row
+                        .col-xs-12
+                            h1	Hello, #{user}!
+                        .col-lg-6
+                          .input-group
+                            input.form-control(type='text', id="text", onkeydown= "if(event.keyCode == 13){ document.getElementById('bt').click(); }", placeholder='Search for games with game name or platform...')
+                            span.input-group-btn
+                              button.btn.btn-default(type='button', id="bt", onclick="search()") Search
+
+                    .row
+                        .col-xs-12
+                            h2 All Ads
+                            overflow:scroll
+                            .scrolly
+                                if adss.length == 0
+                                    .alert.alert-failure <h1> Oops! No Ads Available for the search
+                                else
+                                    for ad,index in adss
+                                        .col-md-4
+                                            .thumbnail
+                                                img(src='#{ad.thumb.url}',style='width:150px;height:150px')
+                                                .caption
+                                                    h4 Game: #{ad.game_name} 
+                                                    h4 Platform: #{ad.game_platform} 
+                                                    h4 Price: #{ad.game_price} $
+                                                    h4 Location: #{ad.game_location}
+                                                    button.btn.btn-info(type='button', data-toggle='modal', data-target='.bs-example-modal-lg', onclick="SendSNSNotification('#{ad.game_name},#{ad.game_owner_email},#{ad.game_owner}')") Contact #{ad.game_owner}
+
+                     .row
+                        h2 Recommended games
+                        overflow:scroll
+                        .scrollx
+                            if suggestions.length == 0
+                                .alert.alert-success Like/dislike a few games below to generate some recommendations
+                            else
+                                .row
+                                    for game, i in suggestions
+                                        .col-sm-3
+                                            .thumbnail
+                                                img.btn(src='#{game.thumb.url}',style='width:150px;height:150px', onclick="search1('#{game.name}')")
+                                                .caption
+                                                    h4(style='margin-bottom: 24px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;') #{game.name}
+                                                    .row
+                                                        .col-xs-6
+                                                            form.text-center(action='/like?game=#{game.id}&user=#{user}' method='post')
+                                                                button.btn.btn-default
+                                                                    span.glyphicon.glyphicon-thumbs-up
+
+                                                        .col-xs-6
+                                                            form.text-center(action='/dislike?game=#{game.id}&user=#{user}' method='post')
+                                                                button.btn.btn-default
+                                                                    span.glyphicon.glyphicon-thumbs-down
+                  
+                                                        
+                                                        
+        
+        #myads.tab-pane.fade.in
+          br
+          br
+          h3 My Ads
+          p
+             
+            for ad,index in adss
+                if(ad.game_owner_email == user1.id)  
+                    span(id="ad#{index}", style='display:None') #{ad._id}
+                    .col-md-3
+
+                        .thumbnail
+                            img(src='#{ad.thumb.url}',style='width:150px;height:150px')
+                            .caption
+                                h4 Game: #{ad.game_name} 
+                                h4 Platform: #{ad.game_platform} 
+                                h4 Price: #{ad.game_price} 
+                                button.btn.btn-info(type='button', onclick="deleteAds(#{index})", data-toggle='modal', data-target='#mymodal') Delete Ad
+        script(type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js')
+        script.
+            $('#mymodal').on('hidden', function () {
+                console.log("inside modal");
+                document.location.reload();
+            })
+
